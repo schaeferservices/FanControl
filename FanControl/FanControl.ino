@@ -4,10 +4,10 @@
 
 #define DHTTYPE DHT11
 
-#define DHT_PIN A1
+#define DHT_PIN A6
 #define ALARM_PIN 4
-#define PWM1_PIN A3
-#define PWM2_PIN A2
+#define PWM1_PIN A4
+#define PWM2_PIN A5
 #define RPM1_PIN 2
 #define RPM2_PIN 3
 
@@ -61,8 +61,8 @@ void loop()
   
   sensors_event_t event;
   dht.temperature().getEvent(&event);
-  //float temp = event.temperature;
-  float temp = 10;
+  float temp = event.temperature;
+  //float temp = 40;
 
   Serial.print("Temp: ");
   Serial.println(temp);
