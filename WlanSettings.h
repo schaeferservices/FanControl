@@ -1,4 +1,4 @@
 #pragma once
 
 #define WLAN_SSID
-ädefine WLAN_SECRET
+#define WLAN_SECRET
