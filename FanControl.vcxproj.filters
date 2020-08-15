@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>xml;json;txt;rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\ESPAsyncTCP">
-      <UniqueIdentifier>{c070a813-60fa-4059-861d-795524a8f2aa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\ESPAsyncWebServer">
-      <UniqueIdentifier>{8e6f4383-309f-4e00-9925-76c0a8b77254}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\DHT_sensor_library">
       <UniqueIdentifier>{1bfb78c4-8376-4b30-bf1f-e560ab0f4e26}</UniqueIdentifier>
     </Filter>
@@ -32,9 +26,6 @@
       <Filter>Misc Files</Filter>
     </None>
     <None Include="AdditionalDefinitions.ino" />
-    <None Include="libraries\ESPAsyncWebServer\edit.htm">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.FanControl.vsarduino.h">
@@ -49,57 +40,6 @@
     <ClInclude Include="NetworkSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncTCP\async_config.h">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncTCP\AsyncPrinter.h">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncTCP\DebugPrintMacros.h">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncTCP\ESPAsyncTCP.h">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncTCP\ESPAsyncTCPbuffer.h">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncTCP\SyncClient.h">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncTCP\tcp_axtls.h">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\AsyncEventSource.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\AsyncJson.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\AsyncWebSocket.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\AsyncWebSynchronization.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\ESPAsyncWebServer.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\SPIFFSEditor.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\StringArray.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\WebAuthentication.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\WebHandlerImpl.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
-    <ClInclude Include="libraries\ESPAsyncWebServer\WebResponseImpl.h">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClInclude>
     <ClInclude Include="libraries\DHT_sensor_library\DHT.h">
       <Filter>Header Files\DHT_sensor_library</Filter>
     </ClInclude>
@@ -111,45 +51,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="libraries\ESPAsyncTCP\AsyncPrinter.cpp">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncTCP\ESPAsyncTCP.cpp">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncTCP\ESPAsyncTCPbuffer.cpp">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncTCP\SyncClient.cpp">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncTCP\tcp_axtls.c">
-      <Filter>Header Files\ESPAsyncTCP</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncWebServer\AsyncEventSource.cpp">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncWebServer\AsyncWebSocket.cpp">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncWebServer\SPIFFSEditor.cpp">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncWebServer\WebAuthentication.cpp">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncWebServer\WebHandlers.cpp">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncWebServer\WebRequest.cpp">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncWebServer\WebResponses.cpp">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClCompile>
-    <ClCompile Include="libraries\ESPAsyncWebServer\WebServer.cpp">
-      <Filter>Header Files\ESPAsyncWebServer</Filter>
-    </ClCompile>
     <ClCompile Include="libraries\DHT_sensor_library\DHT.cpp">
       <Filter>Header Files\DHT_sensor_library</Filter>
     </ClCompile>

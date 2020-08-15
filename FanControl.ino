@@ -37,9 +37,9 @@ AsyncWebServer server(WEB_API_PORT);
 DHT dht(PIN_DHT11_DATA, DHT11);
 
 int counter_seconds = 0;
-uint16_t counter_rpm[2] = { 0 }, rpm[2] = { 0 }, rpm_set = 0;
+uint16_t counter_rpm[2] = { 0 }, rpm[2] = { 0 }, rpm_set = 0, count_hardstate_rpm[2] = { 0 };;
 float avgTemp = 0;
-SystemState state = STATUS_OK;
+SystemState state = STATUS_OK, prevState = state;
 uint64_t previousMillis = 0;
 float temp = 0, hum = 0;
 
@@ -158,13 +158,20 @@ void _main()
     }
 
     // set alarm state
-    if (state != STATUS_OK || TEST_SPEAKER)
+    if (state != prevState)
     {
-        digitalWrite(PIN_SPEAKER, HIGH);
-    }
-    else
-    {
-        digitalWrite(PIN_SPEAKER, LOW);
+        if (state != STATUS_OK || TEST_SPEAKER)
+        {
+            digitalWrite(PIN_SPEAKER, HIGH);
+            log_println("** ALARM ON **");
+        }
+        else
+        {
+            digitalWrite(PIN_SPEAKER, LOW);
+            log_println("** ALARM OFF **");
+        }
+
+        prevState = state;
     }
 }
 
@@ -198,7 +205,16 @@ void calc_rpm(uint8_t num)
 
     if (abs((rpm_set / 2.55) - (rpm[num] / 18)) > 10 || abs((rpm_set / 2.55) - (rpm[num] / 18)) < 10)
     {
-        state = ERROR_RPM;
+        count_hardstate_rpm[num]++;
+        if (count_hardstate_rpm[num] >= 10)
+        {
+            state = ERROR_RPM;
+            count_hardstate_rpm[num] = 0;
+        }
+    }
+    else
+    {
+        count_hardstate_rpm[num] = 0;
     }
 
     counter_rpm[num] = 0;
@@ -208,14 +224,14 @@ void calc_rpm(uint8_t num)
 
 void rpm_interrupts_enable()
 {
-    attachInterrupt(PIN_RPM_1, isr_rpm_1, FALLING);
-    attachInterrupt(PIN_RPM_2, isr_rpm_2, FALLING);
+    attachInterrupt(INTERRUPT_RPM_1, isr_rpm_1, FALLING);
+    attachInterrupt(INTERRUPT_RPM_2, isr_rpm_2, FALLING);
 }
 
 void rpm_interrupts_disable()
 {
-    detachInterrupt(PIN_RPM_1);
-    detachInterrupt(PIN_RPM_2);
+    detachInterrupt(INTERRUPT_RPM_1);
+    detachInterrupt(INTERRUPT_RPM_2);
 }
 
 #ifdef ESP8266

@@ -6,9 +6,12 @@
 #define PIN_DHT11_DATA 6
 #define PIN_PWM_1 10
 #define PIN_PWM_2 11
+#define PIN_SPEAKER 9
 #define PIN_RPM_1 2
 #define PIN_RPM_2 3
-#define PIN_SPEAKER 9
+
+#define INTERRUPT_RPM_1 0
+#define INTERRUPT_RPM_2 1
 
 #else
 
@@ -19,5 +22,8 @@
 #define PIN_RPM_1 digitalPinToInterrupt(D1)
 #define PIN_RPM_2 digitalPinToInterrupt(D8)
 #define PIN_SPEAKER D7
+
+#define INTERRUPT_RPM_1 PIN_RPM_1
+#define INTERRUPT_RPM_2 PIN_RPM_2
 
 #endif
