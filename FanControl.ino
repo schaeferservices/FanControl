@@ -1,6 +1,6 @@
 ﻿/*
     Name:       FanControl
-    Version:    2.2
+    Version:    2.3
     Created:	08/2020
     Author:     Daniel Schäfer
 */
@@ -37,9 +37,9 @@ AsyncWebServer server(WEB_API_PORT);
 DHT dht(PIN_DHT11_DATA, DHT11);
 
 int counter_seconds = 0;
-uint16_t counter_rpm[2] = { 0 }, rpm[2] = { 0 }, rpm_set = 0, count_hardstate_rpm[2] = { 0 };;
+uint16_t counter_rpm[2] = { 0 }, rpm[2] = { 0 }, rpm_set = 0, count_hardstate_rpm_error[2] = { 0 }, count_hardstate_rpm_ok[2] = { 0 };
 float avgTemp = 0;
-SystemState state = STATUS_OK, prevState = state;
+SystemState state = ERROR, prevState = state;
 uint64_t previousMillis = 0;
 float temp = 0, hum = 0;
 
@@ -205,16 +205,23 @@ void calc_rpm(uint8_t num)
 
     if (abs((rpm_set / 2.55) - (rpm[num] / 18)) > 10 || abs((rpm_set / 2.55) - (rpm[num] / 18)) < 10)
     {
-        count_hardstate_rpm[num]++;
-        if (count_hardstate_rpm[num] >= 10)
+        count_hardstate_rpm_ok[num] = 0;
+        count_hardstate_rpm_error[num]++;
+        if (count_hardstate_rpm_error[num] >= 10)
         {
             state = ERROR_RPM;
-            count_hardstate_rpm[num] = 0;
+            count_hardstate_rpm_error[num] = 0;
         }
     }
     else
     {
-        count_hardstate_rpm[num] = 0;
+        count_hardstate_rpm_error[num] = 0;
+        count_hardstate_rpm_ok[num]++;
+        if (count_hardstate_rpm_ok[num] >= 10)
+        {
+            state = STATUS_OK;
+            count_hardstate_rpm_ok[num] = 0;
+        }
     }
 
     counter_rpm[num] = 0;
