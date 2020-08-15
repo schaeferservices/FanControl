@@ -9,7 +9,7 @@ Project for fan control of up to two 4 pin pwm fans (12V) with rpm validation co
 
 # Hardware
 ### Schematic
-![](https://github.com/schaeferservices/FanControl/blob/master/src/FanControl.sch.jpg?raw=true)
+![](https://github.com/schaeferservices/FanControl/blob/master/src/FanControl.sch.png?raw=true)
 
 ### Board
 ![](https://github.com/schaeferservices/FanControl/blob/master/src/FanControl.brd.1.png?raw=true)
