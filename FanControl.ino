@@ -1,6 +1,6 @@
 ﻿/*
     Name:       FanControl
-    Version:    2.1
+    Version:    2.2
     Created:	08/2020
     Author:     Daniel Schäfer
 */
