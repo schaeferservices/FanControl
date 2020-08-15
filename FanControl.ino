@@ -6,30 +6,42 @@
 */
 
 /**************************************************/
-/*                  Project settings              */
+/**                 Project settings             **/
 /**************************************************/
-/**/        #define DEBUG                       /**/
-/**/        #define TEST_SPEAKER 0              /**/
-/**/        #define SERIAL_BAUD_RATE 115200     /**/
-/**/        #define MILLIS_SLEEP_LOOP 1000      /**/
+/**/     #define DEBUG 1                        /**/
+/**/     #define TEST_SPEAKER 0                 /**/
+/**/     #define SERIAL_BAUD_RATE 115200        /**/
+/**/     #define MILLIS_SLEEP_LOOP 1000         /**/
 /**************************************************/
 
-#include <DHT.h>
 #include "PinSetup.h"
+#include "NetworkSettings.h"
 #include "AdditionalDefinitions.h"
+
+#include "libraries/DHT_sensor_library/DHT.h"
+
+// include section only ESP8266
+#ifdef ESP8266
+
+#include <ESP8266WiFi.h>
+#include <Hash.h>
+#include "libraries/ESPAsyncTCP/ESPAsyncTCP.h"
+#include "libraries/ESPAsyncWebServer/ESPAsyncWebServer.h"
+
+#endif
 
 DHT dht(PIN_DHT11_DATA, DHT11);
 
 int counter_seconds = 0;
 uint16_t counter_rpm[2] = { 0 }, rpm[2] = { 0 }, rpm_set = 0;
 float avgTemp = 0;
-ALARM_TYPE alarm = ALARM_OFF;
-float temp = 0;
+SystemState state = STATUS_OK;
 uint64_t previousMillis = 0;
+float temp = 0, hum = 0;
 
 void setup()
 {
-#ifdef DEBUG
+#ifdef _DEBUG
     Serial.begin(SERIAL_BAUD_RATE);
 #endif
 
@@ -45,25 +57,27 @@ void setup()
     //digitalWrite(PIN_RPM_1, HIGH);
     //digitalWrite(PIN_RPM_2, HIGH);
     rpm_interrupts_enable();
+
+#ifdef ESP8266
+    initWebApi();
+#endif
 }
 
 void _main()
 {
-    float temp = dht.readTemperature();
-    float hum = dht.readHumidity();
+    temp = dht.readTemperature();
+    hum = dht.readHumidity();
 
-#ifdef DEBUG
-    Serial.print("Temp: ");
-    Serial.print(temp);
-    Serial.print(" Hum: ");
-    Serial.print(hum);
-    Serial.print("%");
-#endif
+    log_print("Temp: ");
+    log_print(temp);
+    log_print(" Hum: ");
+    log_print(hum);
+    log_print("%");
 
     // calc rpm
     calc_rpm(RPM_1);
     calc_rpm(RPM_2);
-    Serial.println();
+    log_println();
 
     if (counter_seconds == 0)
     {
@@ -77,10 +91,8 @@ void _main()
     {
         avgTemp = avgTemp / 11;
 
-#ifdef DEBUG
-        Serial.print("avgTemp: ");
-        Serial.println(avgTemp);
-#endif
+        log_print("avgTemp: ");
+        log_println(avgTemp);
 
         uint16_t rpm_set = 0;
         if (avgTemp >= 20)
@@ -100,7 +112,7 @@ void _main()
             rpm_set = 255;
             analogWrite(PIN_PWM_1, rpm_set);
             analogWrite(PIN_PWM_2, rpm_set);
-            alarm = ALARM_ON;
+            state = ERROR_TEMP;
         }
         else
         {
@@ -109,11 +121,9 @@ void _main()
             analogWrite(PIN_PWM_2, rpm_set);
         }
 
-#ifdef DEBUG
-        Serial.print("RPM_set: ");
-        Serial.print(rpm_set / 2.55);
-        Serial.println("%");
-#endif
+        log_print("RPM_set: ");
+        log_print(rpm_set / 2.55);
+        log_println("%");
 
         counter_seconds = 0;
     }
@@ -122,18 +132,16 @@ void _main()
         rpm_set = 255;
         analogWrite(PIN_PWM_1, rpm_set);
         analogWrite(PIN_PWM_2, rpm_set);
-        alarm = ALARM_ON;
+        state = ERROR_TEMP;
 
-#ifdef DEBUG
-        Serial.println();
-        Serial.print("RPM_set: ");
-        Serial.print(rpm_set / 2.55);
-        Serial.println("%");
-#endif
+        log_println();
+        log_print("RPM_set: ");
+        log_print(rpm_set / 2.55);
+        log_println("%");
     }
 
     // set alarm state
-    if (alarm == ALARM_ON)
+    if (state != STATUS_OK || TEST_SPEAKER)
     {
         digitalWrite(PIN_SPEAKER, HIGH);
     }
@@ -159,17 +167,15 @@ void calc_rpm(uint8_t num)
 
     rpm[num] = counter_rpm[num] * (60 / 2);
 
-#ifdef DEBUG
-    Serial.print(" RPM_FAN_");
-    Serial.print(num);
-    Serial.print(": ");
-    Serial.print(rpm[num] / 18);
-    Serial.print("% ");
-#endif
+    log_print(" RPM_FAN_");
+    log_print(num);
+    log_print(": ");
+    log_print(rpm[num] / 18);
+    log_print("% ");
 
-    if ((abs((rpm_set / 2.55) - (rpm[num] / 18)) > 10) || TEST_SPEAKER)
+    if (abs((rpm_set / 2.55) - (rpm[num] / 18)) > 10)
     {
-        alarm = ALARM_ON;
+        state = ERROR_RPM;
     }
 
     counter_rpm[num] = 0;
@@ -189,32 +195,43 @@ void rpm_interrupts_disable()
     detachInterrupt(PIN_RPM_2);
 }
 
-#ifdef NOTDEF
+#ifdef ESP8266
 void initWebApi()
 {
     // https://randomnerdtutorials.com/esp8266-dht11dht22-temperature-and-humidity-web-server-with-arduino-ide/
 
     // Connect to Wi-Fi
-    WiFi.begin(ssid, password);
-    Serial.println("Connecting to WiFi");
-    while (WiFi.status() != WL_CONNECTED) {
+    WiFi.begin(WLAN_SSID, WLAN_SECRET);
+    log_print("Connecting to WiFi");
+    while (WiFi.status() != WL_CONNECTED) 
+    {
         delay(1000);
-        Serial.println(".");
+        log_print(".");
     }
 
     // Print ESP8266 Local IP Address
-    Serial.println(WiFi.localIP());
+    log_println();
+    log_print("Connected: ");
+    log_println(WiFi.localIP());
+    
+    AsyncWebServer server(WEB_API_PORT);
 
     // Route for root / web page
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "text/html", index_html, processor);
-        });
-    server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "text/plain", String(t).c_str());
-        });
-    server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "text/plain", String(h).c_str());
-        });
+        request->send_P(200, "text/html", String("").c_str());
+    });
+
+    server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest* request) {
+        request->send_P(200, "application/json", String("{ \"state\": \"" + SystemStateToMessage(state) + "\" }").c_str());
+    });
+
+    server.on("/api/temperature", HTTP_GET, [](AsyncWebServerRequest* request) {
+        request->send_P(200, "application/json", String("{ \"temperature\": \"" + String(temp) + "\" }").c_str());
+    });
+
+    server.on("/api/humidity", HTTP_GET, [](AsyncWebServerRequest* request) {
+        request->send_P(200, "application/json", String("{ \"humidity\": \"" + String(hum) + "\" }").c_str());
+    });
 
     // Start server
     server.begin();
