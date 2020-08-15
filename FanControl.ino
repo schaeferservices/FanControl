@@ -18,6 +18,7 @@
 #include "PinSetup.h"
 #include "NetworkSettings.h"
 #include "AdditionalDefinitions.h"
+
 #include "libraries/DHT_sensor_library/DHT.h"
 
 // include section only ESP8266
@@ -220,8 +221,6 @@ void rpm_interrupts_disable()
 #ifdef ESP8266
 void initWebApi()
 {
-    // https://randomnerdtutorials.com/esp8266-dht11dht22-temperature-and-humidity-web-server-with-arduino-ide/
-
     // Connect to Wi-Fi
     WiFi.begin(WLAN_SSID, WLAN_SECRET);
     log_print("Connecting to WiFi");
@@ -246,11 +245,11 @@ void initWebApi()
     });
 
     server.on("/api/temperature", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "application/json", String("{ \"temperature\": \"" + String(temp) + "\" }").c_str());
+        request->send_P(200, "application/json", String("{ \"temperature\": { \"value\": \"" + String(temp) + "\", \"unit\": \"°C\" } }").c_str());
     });
 
     server.on("/api/humidity", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "application/json", String("{ \"humidity\": \"" + String(hum) + "\" }").c_str());
+        request->send_P(200, "application/json", String("{ \"humidity\": { \"value\": \"" + String(hum) + "\", \"unit\": \"%\" } }").c_str());
     });
 
     // Start server
