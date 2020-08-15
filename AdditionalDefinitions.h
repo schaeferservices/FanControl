@@ -14,3 +14,10 @@ void log_print(char* str);
 void log_println(char* str = "");
 void log_print(int i);
 void log_println(int i);
+
+#ifdef ESP8266
+
+void log_print(IPAddress ip);
+void log_println(IPAddress ip);
+
+#endif

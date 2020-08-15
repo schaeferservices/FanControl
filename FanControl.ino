@@ -1,6 +1,6 @@
 ﻿/*
     Name:       FanControl
-    Version:    2
+    Version:    2.1
     Created:	08/2020
     Author:     Daniel Schäfer
 */
@@ -12,12 +12,12 @@
 /**/     #define TEST_SPEAKER 0                 /**/
 /**/     #define SERIAL_BAUD_RATE 115200        /**/
 /**/     #define MILLIS_SLEEP_LOOP 1000         /**/
+/**/     #define OTA_ENABLE 1                   /**/
 /**************************************************/
 
 #include "PinSetup.h"
 #include "NetworkSettings.h"
 #include "AdditionalDefinitions.h"
-
 #include "libraries/DHT_sensor_library/DHT.h"
 
 // include section only ESP8266
@@ -27,6 +27,9 @@
 #include <Hash.h>
 #include "libraries/ESPAsyncTCP/ESPAsyncTCP.h"
 #include "libraries/ESPAsyncWebServer/ESPAsyncWebServer.h"
+#include <ArduinoOTA.h>
+
+AsyncWebServer server(WEB_API_PORT);
 
 #endif
 
@@ -59,7 +62,20 @@ void setup()
     rpm_interrupts_enable();
 
 #ifdef ESP8266
+
     initWebApi();
+
+#ifdef OTA_ENABLE
+
+    // setup OTA
+    ArduinoOTA.setHostname(OTA_HOSTNAME);  
+    ArduinoOTA.begin(); 
+    ArduinoOTA.onStart([]() {
+        server.end();
+    });
+
+#endif
+
 #endif
 }
 
@@ -159,6 +175,12 @@ void loop()
         previousMillis = currentMillis;
         _main();
     }
+
+#ifdef ESP8266
+#ifdef OTA_ENABLE
+    ArduinoOTA.handle();
+#endif
+#endif
 }
 
 void calc_rpm(uint8_t num)
@@ -173,7 +195,7 @@ void calc_rpm(uint8_t num)
     log_print(rpm[num] / 18);
     log_print("% ");
 
-    if (abs((rpm_set / 2.55) - (rpm[num] / 18)) > 10)
+    if (abs((rpm_set / 2.55) - (rpm[num] / 18)) > 10 || abs((rpm_set / 2.55) - (rpm[num] / 18)) < 10)
     {
         state = ERROR_RPM;
     }
@@ -214,14 +236,12 @@ void initWebApi()
     log_print("Connected: ");
     log_println(WiFi.localIP());
     
-    AsyncWebServer server(WEB_API_PORT);
-
     // Route for root / web page
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
         request->send_P(200, "text/html", String("").c_str());
     });
 
-    server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest* request) {
+    server.on("/api/state", HTTP_GET, [](AsyncWebServerRequest* request) {
         request->send_P(200, "application/json", String("{ \"state\": \"" + SystemStateToMessage(state) + "\" }").c_str());
     });
 

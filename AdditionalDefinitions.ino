@@ -5,19 +5,23 @@ String SystemStateToMessage(SystemState state)
 	switch (state)
 	{
 		case STATUS_OK:
-			return "OK";
+			return String("OK");
 			break;
 
 		case ERROR:
-			return "ERROR";
+			return String("ERROR");
 			break;
 		
 		case ERROR_TEMP:
-			return "ERROR_TEMP";
+			return String("ERROR_TEMP");
 			break;
 
 		case ERROR_RPM:
-			return "ERROR_RPM";
+			return String("ERROR_RPM");
+			break;
+		default:
+			return String("ERROR_UNKNOWN");
+			break;
 	}
 }
 
@@ -48,3 +52,21 @@ void log_println(int i)
 	Serial.println(i);
 #endif
 }
+
+#ifdef ESP8266
+
+void log_print(IPAddress ip)
+{
+#ifdef _DEBUG
+	Serial.print(ip);
+#endif
+}
+
+void log_println(IPAddress ip)
+{
+#ifdef _DEBUG
+	Serial.println(ip);
+#endif
+}
+
+#endif ESP8266
