@@ -6,29 +6,42 @@
 
 #endif
 
-String SystemStateToMessage(SystemState state)
+String ComponentStateToMessage(ComponentState state)
 {
 	switch (state)
 	{
-		case STATUS_OK:
-			return String("OK");
-			break;
+		case STATE_OK:
+			return "OK";
 
-		case ERROR:
-			return String("ERROR");
-			break;
-		
-		case ERROR_TEMP:
-			return String("ERROR_TEMP");
-			break;
+		case STATE_ERROR:
+			return "ERROR";
 
-		case ERROR_RPM:
-			return String("ERROR_RPM");
-			break;
 		default:
-			return String("ERROR_UNKNOWN");
-			break;
+			return "ERROR_UNKOWN";
 	}
+}
+
+ComponentState GetSystemState(ComponentState state[])
+{
+	for (int i = 0; i < COUNT_COMPONENT_STATES; i++)
+	{
+		if (state[i] != STATE_OK)
+		{
+			return STATE_ERROR;
+		}
+	}
+
+	return STATE_OK;
+}
+
+void log_print_state(ComponentState state[])
+{
+	String str = "FAN_1: " + ComponentStateToMessage(state[FAN_1]) + "\n" 
+			   + "FAN_2: " + ComponentStateToMessage(state[FAN_2]) + "\n"
+			   + "DHT_TEMP: " + ComponentStateToMessage(state[DHT_TEMP]) + "\n"
+			   + "DHT_HUM: " + ComponentStateToMessage(state[DHT_HUM]) + "\n";
+
+	log_print(str);
 }
 
 void log_print(char* str)
@@ -56,6 +69,20 @@ void log_println(int i)
 {
 #ifdef _DEBUG
 	Serial.println(i);
+#endif
+}
+
+void log_print(String str)
+{
+#ifdef _DEBUG
+	Serial.print(str.c_str());
+#endif
+}
+
+void log_println(String str)
+{
+#ifdef _DEBUG
+	Serial.println(str.c_str());
 #endif
 }
 

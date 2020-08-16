@@ -1,6 +1,6 @@
 ﻿/*
     Name:       FanControl
-    Version:    2.3
+    Version:    2.4
     Created:	08/2020
     Author:     Daniel Schäfer
 */
@@ -11,9 +11,11 @@
 /**/     #define DEBUG 1                        /**/
 /**/     #define TEST_SPEAKER 0                 /**/
 /**/     #define SERIAL_BAUD_RATE 115200        /**/
-/**/     #define MILLIS_SLEEP_LOOP 1000         /**/
+/**/     #define MILLIS_SLEEP_LOOP 2000         /**/
 /**/     #define OTA_ENABLE 1                   /**/
 /**************************************************/
+
+#include <Arduino.h>
 
 #include "PinSetup.h"
 #include "NetworkSettings.h"
@@ -37,11 +39,13 @@ AsyncWebServer server(WEB_API_PORT);
 DHT dht(PIN_DHT11_DATA, DHT11);
 
 int counter_seconds = 0;
-uint16_t counter_rpm[2] = { 0 }, rpm[2] = { 0 }, rpm_set = 0, count_hardstate_rpm_error[2] = { 0 }, count_hardstate_rpm_ok[2] = { 0 };
-float avgTemp = 0;
-SystemState state = ERROR, prevState = state;
+uint16_t counter_rpm[2] = { 0 }, rpm[2] = { 0 }, rpm_set = 0;
+float avgTemp = 0, temp = 0, hum = 0;
+ComponentState prevState = STATE_OK;
 uint64_t previousMillis = 0;
-float temp = 0, hum = 0;
+ComponentState state[COUNT_COMPONENT_STATES] = { STATE_OK, STATE_OK, STATE_OK, STATE_OK };
+ComponentState state_hard[COUNT_COMPONENT_STATES] = { STATE_OK, STATE_OK, STATE_OK, STATE_OK };
+int state_count_hardstate_ok[COUNT_COMPONENT_STATES] = { 0 }, state_count_hardstate_error[COUNT_COMPONENT_STATES] = { 0 };
 
 void setup()
 {
@@ -85,11 +89,7 @@ void _main()
     temp = dht.readTemperature();
     hum = dht.readHumidity();
 
-    log_print("Temp: ");
-    log_print(temp);
-    log_print(" Hum: ");
-    log_print(hum);
-    log_print("%");
+    log_print("Temp: " + String(temp) + "°C Hum: " + String(hum) + "%");
 
     // calc rpm
     calc_rpm(RPM_1);
@@ -108,8 +108,7 @@ void _main()
     {
         avgTemp = avgTemp / 11;
 
-        log_print("avgTemp: ");
-        log_println(avgTemp);
+        log_println("avgTemp: " + String(avgTemp) + "°C");
 
         uint16_t rpm_set = 0;
         if (avgTemp >= 20)
@@ -123,24 +122,24 @@ void _main()
 
             analogWrite(PIN_PWM_1, rpm_set);
             analogWrite(PIN_PWM_2, rpm_set);
+            state[DHT_TEMP] = STATE_OK;
         }
         else if (isnan(avgTemp))
         {
             rpm_set = 255;
             analogWrite(PIN_PWM_1, rpm_set);
             analogWrite(PIN_PWM_2, rpm_set);
-            state = ERROR_TEMP;
+            state[DHT_TEMP] = STATE_ERROR;
         }
         else
         {
             rpm_set = 0;
             analogWrite(PIN_PWM_1, rpm_set);
             analogWrite(PIN_PWM_2, rpm_set);
+            state[DHT_TEMP] = STATE_OK;
         }
 
-        log_print("RPM_set: ");
-        log_print(rpm_set / 2.55);
-        log_println("%");
+        log_println("\nRPM_set: " + String(rpm_set / 2.55) + "%");
 
         counter_seconds = 0;
     }
@@ -149,18 +148,52 @@ void _main()
         rpm_set = 255;
         analogWrite(PIN_PWM_1, rpm_set);
         analogWrite(PIN_PWM_2, rpm_set);
-        state = ERROR_TEMP;
+        state[DHT_TEMP] = STATE_ERROR;
 
-        log_println();
-        log_print("RPM_set: ");
-        log_print(rpm_set / 2.55);
-        log_println("%");
+        log_println("\nRPM_set: " + String(rpm_set / 2.55) + "%");
     }
 
-    // set alarm state
-    if (state != prevState)
+    if (isnan(hum))
     {
-        if (state != STATUS_OK || TEST_SPEAKER)
+        state[DHT_HUM] = STATE_ERROR;
+    }
+    else
+    {
+        state[DHT_HUM] = STATE_OK;
+    }
+
+    //state hardstate validation
+    for (int i = 0; i < COUNT_COMPONENT_STATES; i++)
+    {
+        if (state[i] != STATE_OK)
+        {
+            state_count_hardstate_ok[i] = 0;
+            state_count_hardstate_error[i]++;
+
+            if (state_count_hardstate_error[i] >= HARDSTATE_VALIDATION_AMMOUNT)
+            {
+                state_count_hardstate_error[i] = 0;
+                state_hard[i] = state[i];
+            }
+        }
+        else
+        {
+            state_count_hardstate_error[i] = 0;
+            state_count_hardstate_ok[i]++;
+
+            if (state_count_hardstate_ok[i] >= HARDSTATE_VALIDATION_AMMOUNT)
+            {
+                state_count_hardstate_ok[i] = 0;
+                state_hard[i] = state[i];
+            }
+        }
+    }
+
+    // state handling
+    log_print_state(state_hard);
+    if (GetSystemState(state_hard) != prevState)
+    {
+        if (GetSystemState(state_hard) != STATE_OK || TEST_SPEAKER)
         {
             digitalWrite(PIN_SPEAKER, HIGH);
             log_println("** ALARM ON **");
@@ -171,7 +204,7 @@ void _main()
             log_println("** ALARM OFF **");
         }
 
-        prevState = state;
+        prevState = GetSystemState(state_hard);
     }
 }
 
@@ -197,31 +230,15 @@ void calc_rpm(uint8_t num)
 
     rpm[num] = counter_rpm[num] * (60 / 2);
 
-    log_print(" RPM_FAN_");
-    log_print(num);
-    log_print(": ");
-    log_print(rpm[num] / 18);
-    log_print("% ");
+    log_print(" RPM_FAN_" + String(num) + ": " + String(rpm[num] / 18 < 100 ? rpm[num] / 18 : 100) + "% ");
 
-    if (abs((rpm_set / 2.55) - (rpm[num] / 18)) > 10 || abs((rpm_set / 2.55) - (rpm[num] / 18)) < 10)
+    if (abs((rpm_set / 2.55) - (rpm[num] / 18)) > 20 || ((rpm[num] / 18) <= 2 && rpm_set > 2))
     {
-        count_hardstate_rpm_ok[num] = 0;
-        count_hardstate_rpm_error[num]++;
-        if (count_hardstate_rpm_error[num] >= 10)
-        {
-            state = ERROR_RPM;
-            count_hardstate_rpm_error[num] = 0;
-        }
+        state[num == RPM_1 ? FAN_1 : (num == RPM_2 ? FAN_2 : UNDEFINED)] = STATE_ERROR;
     }
     else
     {
-        count_hardstate_rpm_error[num] = 0;
-        count_hardstate_rpm_ok[num]++;
-        if (count_hardstate_rpm_ok[num] >= 10)
-        {
-            state = STATUS_OK;
-            count_hardstate_rpm_ok[num] = 0;
-        }
+        state[num == RPM_1 ? FAN_1 : (num == RPM_2 ? FAN_2 : UNDEFINED)] = STATE_OK;
     }
 
     counter_rpm[num] = 0;
@@ -254,8 +271,7 @@ void initWebApi()
     }
 
     // Print ESP8266 Local IP Address
-    log_println();
-    log_print("Connected: ");
+    log_print("\nConnected: ");
     log_println(WiFi.localIP());
     
     // Route for root / web page
@@ -263,8 +279,13 @@ void initWebApi()
         request->send_P(200, "text/html", String("").c_str());
     });
 
-    server.on("/api/state", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "application/json", String("{ \"state\": \"" + SystemStateToMessage(state) + "\" }").c_str());
+    server.on("/api/state/system", HTTP_GET, [](AsyncWebServerRequest* request) {
+        request->send_P(200, "application/json", String("{ \"systemstate\": \"" + ComponentStateToMessage(GetSystemState(state)) + "\" }").c_str());
+    });
+
+    //TODO
+    server.on("/api/state/components", HTTP_GET, [](AsyncWebServerRequest* request) {
+        request->send_P(200, "application/json", String("{ \"systemstate\": \"" + ComponentStateToMessage(GetSystemState(state)) + "\" }").c_str());
     });
 
     server.on("/api/temperature", HTTP_GET, [](AsyncWebServerRequest* request) {
