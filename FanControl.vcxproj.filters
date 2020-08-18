@@ -49,6 +49,9 @@
     <ClInclude Include="libraries\Adafruit_Unified_Sensor\Adafruit_Sensor.h">
       <Filter>Header Files\Adafruit_Unified_Sensor</Filter>
     </ClInclude>
+    <ClInclude Include="FanSetup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="libraries\DHT_sensor_library\DHT.cpp">

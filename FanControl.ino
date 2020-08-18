@@ -18,6 +18,7 @@
 #include <Arduino.h>
 
 #include "PinSetup.h"
+#include "FanSetup.h"
 #include "NetworkSettings.h"
 #include "AdditionalDefinitions.h"
 
@@ -39,13 +40,14 @@ AsyncWebServer server(WEB_API_PORT);
 DHT dht(PIN_DHT11_DATA, DHT11);
 
 int counter_seconds = 0;
-uint16_t counter_rpm[2] = { 0 }, rpm[2] = { 0 }, rpm_set = 0;
+uint16_t counter_rpm[2] = { 0 }, rpm[2] = { 0 }, rpm_set[2] = { 0 };
 float avgTemp = 0, temp = 0, hum = 0;
 ComponentState prevState = STATE_OK;
 uint64_t previousMillis = 0;
 ComponentState state[COUNT_COMPONENT_STATES] = { STATE_OK, STATE_OK, STATE_OK, STATE_OK };
 ComponentState state_hard[COUNT_COMPONENT_STATES] = { STATE_OK, STATE_OK, STATE_OK, STATE_OK };
 int state_count_hardstate_ok[COUNT_COMPONENT_STATES] = { 0 }, state_count_hardstate_error[COUNT_COMPONENT_STATES] = { 0 };
+unsigned long prevMillisRPM[2] = { 0 };
 
 void setup()
 {
@@ -110,47 +112,45 @@ void _main()
 
         log_println("avgTemp: " + String(avgTemp) + "°C");
 
-        uint16_t rpm_set = 0;
         if (avgTemp >= 20)
         {
-            rpm_set = avgTemp * 8.5 - 170;
+            rpm_set[RPM_1] = TempToByte(avgTemp, RPM_1);
+            rpm_set[RPM_2] = TempToByte(avgTemp, RPM_2);
 
-            if (rpm_set < 28)
-            {
-                rpm_set = 28;
-            }
-
-            analogWrite(PIN_PWM_1, rpm_set);
-            analogWrite(PIN_PWM_2, rpm_set);
             state[DHT_TEMP] = STATE_OK;
         }
         else if (isnan(avgTemp))
         {
-            rpm_set = 255;
-            analogWrite(PIN_PWM_1, rpm_set);
-            analogWrite(PIN_PWM_2, rpm_set);
+            rpm_set[RPM_1] = 255;
+            rpm_set[RPM_2] = 255;
+
             state[DHT_TEMP] = STATE_ERROR;
         }
         else
         {
-            rpm_set = 0;
-            analogWrite(PIN_PWM_1, rpm_set);
-            analogWrite(PIN_PWM_2, rpm_set);
+            rpm_set[RPM_1] = 0;
+            rpm_set[RPM_2] = 0;
+
             state[DHT_TEMP] = STATE_OK;
         }
 
-        log_println("\nRPM_set: " + String(rpm_set / 2.55) + "%");
+        analogWrite(PIN_PWM_1, rpm_set[RPM_1]);
+        analogWrite(PIN_PWM_2, rpm_set[RPM_2]);
+
+        log_println("\n#SET-RPM_FAN_1: " + String(rpm_set[RPM_1] / 2.55) + "%" + "\n#SET-RPM_FAN_2: " + String(rpm_set[RPM_2] / 2.55) + "%");
 
         counter_seconds = 0;
     }
     else if (isnan(temp))
     {
-        rpm_set = 255;
-        analogWrite(PIN_PWM_1, rpm_set);
-        analogWrite(PIN_PWM_2, rpm_set);
+        rpm_set[RPM_1] = 255;
+        rpm_set[RPM_2] = 255;
+
+        analogWrite(PIN_PWM_1, rpm_set[RPM_1]);
+        analogWrite(PIN_PWM_2, rpm_set[RPM_2]);
         state[DHT_TEMP] = STATE_ERROR;
 
-        log_println("\nRPM_set: " + String(rpm_set / 2.55) + "%");
+        log_println("\n#SET-RPM_FAN_1: " + String(rpm_set[RPM_1] / 2.55) + "%" + "\n#SET-RPM_FAN_2: " + String(rpm_set[RPM_2] / 2.55) + "%");
     }
 
     if (isnan(hum))
@@ -228,11 +228,13 @@ void calc_rpm(uint8_t num)
 {
     rpm_interrupts_disable();
 
-    rpm[num] = counter_rpm[num] * (60 / 2);
+    rpm[num] = (counter_rpm[num] / ((millis() - prevMillisRPM[num]) / 1000.0)) * 60;
+    log_print("\n## rpm: " + String(rpm[num]) + "\n");
+    float rpm_percent = RPMToPercent(rpm[num], num == RPM_1 ? RPM_1 : (num == RPM_2 ? RPM_2 : UNDEFINED));
 
-    log_print(" RPM_FAN_" + String(num) + ": " + String(rpm[num] / 18 < 100 ? rpm[num] / 18 : 100) + "% ");
+    log_print(" RPM_FAN_" + String(num) + ": " + String(rpm_percent) + "% ");
 
-    if (abs((rpm_set / 2.55) - (rpm[num] / 18)) > 20 || ((rpm[num] / 18) <= 2 && rpm_set > 2))
+    if (abs((rpm_set[num] / 2.55) - rpm_percent) > 20 || (rpm_percent <= 2 && (rpm_set[num] / 2.55) > 2))
     {
         state[num == RPM_1 ? FAN_1 : (num == RPM_2 ? FAN_2 : UNDEFINED)] = STATE_ERROR;
     }
@@ -242,6 +244,7 @@ void calc_rpm(uint8_t num)
     }
 
     counter_rpm[num] = 0;
+    prevMillisRPM[num] = millis();
 
     rpm_interrupts_enable();
 }

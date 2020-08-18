@@ -15,6 +15,8 @@ enum Component { UNDEFINED, FAN_1, FAN_2, DHT_TEMP, DHT_HUM };
 
 String ComponentStateToMessage(ComponentState state);
 ComponentState GetSystemState(ComponentState state[]);
+float TempToByte(float temp, int fanNum);
+float RPMToPercent(uint16_t rpm, int fanNum);
 void log_print_state(ComponentState state[]);
 void log_print(char* str);
 void log_println(char* str = "");
