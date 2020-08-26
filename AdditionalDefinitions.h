@@ -27,6 +27,7 @@ void log_println(String str);
 
 #ifdef ESP8266
 
+#include <ESP8266WiFi.h>
 void log_print(IPAddress ip);
 void log_println(IPAddress ip);
 

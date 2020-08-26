@@ -1,6 +1,6 @@
 ﻿/*
     Name:       FanControl
-    Version:    2.4
+    Version:    2.5
     Created:	08/2020
     Author:     Daniel Schäfer
 */
@@ -283,12 +283,12 @@ void initWebApi()
     });
 
     server.on("/api/state/system", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "application/json", String("{ \"systemstate\": \"" + ComponentStateToMessage(GetSystemState(state)) + "\" }").c_str());
+        request->send_P(200, "application/json", String("{ \"systemstate\": \"" + String("test") + "\" }").c_str());
     });
 
     //TODO
     server.on("/api/state/components", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "application/json", String("{ \"systemstate\": \"" + ComponentStateToMessage(GetSystemState(state)) + "\" }").c_str());
+        request->send_P(200, "application/json", String("{ \"systemstate\": \"" + String("test") + "\" }").c_str());
     });
 
     server.on("/api/temperature", HTTP_GET, [](AsyncWebServerRequest* request) {
