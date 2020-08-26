@@ -1,6 +1,6 @@
 ﻿/*
     Name:       FanControl
-    Version:    2.5
+    Version:    2.6
     Created:	08/2020
     Author:     Daniel Schäfer
 */
@@ -283,12 +283,27 @@ void initWebApi()
     });
 
     server.on("/api/state/system", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "application/json", String("{ \"systemstate\": \"" + String("test") + "\" }").c_str());
+        request->send_P(200, "application/json", String("{ \"state\": \"" + ComponentStateToMessage(GetSystemState(state_hard)) + "\" }").c_str());
     });
 
-    //TODO
+    server.on("/api/state/components/FAN_1", HTTP_GET, [](AsyncWebServerRequest* request) {
+        request->send_P(200, "application/json", String("{ \"state\": \"" + ComponentStateToMessage(state_hard[FAN_1]) + "\" }").c_str());
+    });
+
+    server.on("/api/state/components/FAN_2", HTTP_GET, [](AsyncWebServerRequest* request) {
+        request->send_P(200, "application/json", String("{ \"state\": \"" + ComponentStateToMessage(state_hard[FAN_2]) + "\" }").c_str());
+    });
+
+    server.on("/api/state/components/DHT_TEMP", HTTP_GET, [](AsyncWebServerRequest* request) {
+        request->send_P(200, "application/json", String("{ \"state\": \"" + ComponentStateToMessage(state_hard[DHT_TEMP]) + "\" }").c_str());
+    });
+
+    server.on("/api/state/components/DHT_HUM", HTTP_GET, [](AsyncWebServerRequest* request) {
+        request->send_P(200, "application/json", String("{ \"state\": \"" + ComponentStateToMessage(state_hard[DHT_HUM]) + "\" }").c_str());
+    });
+
     server.on("/api/state/components", HTTP_GET, [](AsyncWebServerRequest* request) {
-        request->send_P(200, "application/json", String("{ \"systemstate\": \"" + String("test") + "\" }").c_str());
+        request->send_P(200, "application/json", String("{ \"components\": [ \"FAN_1\", \"FAN_2\", \"DHT_TEMP\", \"DHT_HUM\" ] }").c_str());
     });
 
     server.on("/api/temperature", HTTP_GET, [](AsyncWebServerRequest* request) {
