@@ -36,7 +36,7 @@ ComponentState GetSystemState(ComponentState state[])
 
 void log_print_state(ComponentState state[])
 {
-	String str = "FAN_1: " + ComponentStateToMessage(state[FAN_1]) + "\n" 
+	String str = "FAN_1: " + ComponentStateToMessage(state[FAN_1]) + "\n"
 			   + "FAN_2: " + ComponentStateToMessage(state[FAN_2]) + "\n"
 			   + "DHT_TEMP: " + ComponentStateToMessage(state[DHT_TEMP]) + "\n"
 			   + "DHT_HUM: " + ComponentStateToMessage(state[DHT_HUM]) + "\n";
@@ -46,8 +46,8 @@ void log_print_state(ComponentState state[])
 
 float TempToByte(float temp, int fanNum)
 {
-	int fan_min_rpm = fanNum == RPM_1 ? FAN_1_MIN_RPM : (fanNum == RPM_2 ? FAN_2_MIN_RPM : NULL);
-	int fan_max_rpm = fanNum == RPM_1 ? FAN_1_MAX_RPM : (fanNum == RPM_2 ? FAN_2_MAX_RPM : NULL);
+	int fan_min_rpm = fanNum == FAN_1 ? FAN_1_MIN_RPM : (fanNum == FAN_2 ? FAN_2_MIN_RPM : NULL);
+	int fan_max_rpm = fanNum == FAN_1 ? FAN_1_MAX_RPM : (fanNum == FAN_2 ? FAN_2_MAX_RPM : NULL);
 
 	if (temp < 20)
 	{
@@ -65,8 +65,8 @@ float TempToByte(float temp, int fanNum)
 
 float RPMToPercent(uint16_t rpm, int fanNum)
 {
-	int fan_max_rpm = fanNum == RPM_1 ? FAN_1_MAX_RPM : (fanNum == RPM_2 ? FAN_2_MAX_RPM : NULL);
-	int fan_min_rpm = fanNum == RPM_1 ? FAN_1_MIN_RPM : (fanNum == RPM_2 ? FAN_2_MIN_RPM : NULL);
+	int fan_max_rpm = fanNum == FAN_1 ? FAN_1_MAX_RPM : (fanNum == FAN_2 ? FAN_2_MAX_RPM : NULL);
+	int fan_min_rpm = fanNum == FAN_1 ? FAN_1_MIN_RPM : (fanNum == FAN_2 ? FAN_2_MIN_RPM : NULL);
 
 	if (rpm < fan_min_rpm)
 	{

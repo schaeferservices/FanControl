@@ -1,8 +1,5 @@
 #pragma once
 
-#define RPM_1 0
-#define RPM_2 1
-
 #define COUNT_COMPONENT_STATES 5
 #define HARDSTATE_VALIDATION_AMMOUNT 5
 
@@ -11,7 +8,7 @@
 #endif
 
 enum ComponentState { STATE_OK, STATE_ERROR };
-enum Component { UNDEFINED, FAN_1, FAN_2, DHT_TEMP, DHT_HUM };
+enum Component { FAN_1 = 0, FAN_2, DHT_TEMP, DHT_HUM, UNDEFINED };
 
 String ComponentStateToMessage(ComponentState state);
 ComponentState GetSystemState(ComponentState state[]);

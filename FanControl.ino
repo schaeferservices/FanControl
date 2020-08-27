@@ -94,8 +94,8 @@ void _main()
     log_print("Temp: " + String(temp) + "°C Hum: " + String(hum) + "%");
 
     // calc rpm
-    calc_rpm(RPM_1);
-    calc_rpm(RPM_2);
+    calc_rpm(FAN_1);
+    calc_rpm(FAN_2);
     log_println();
 
     if (counter_seconds == 0)
@@ -114,43 +114,43 @@ void _main()
 
         if (avgTemp >= 20)
         {
-            rpm_set[RPM_1] = TempToByte(avgTemp, RPM_1);
-            rpm_set[RPM_2] = TempToByte(avgTemp, RPM_2);
+            rpm_set[FAN_1] = TempToByte(avgTemp, FAN_1);
+            rpm_set[FAN_2] = TempToByte(avgTemp, FAN_2);
 
             state[DHT_TEMP] = STATE_OK;
         }
         else if (isnan(avgTemp))
         {
-            rpm_set[RPM_1] = 255;
-            rpm_set[RPM_2] = 255;
+            rpm_set[FAN_1] = 255;
+            rpm_set[FAN_2] = 255;
 
             state[DHT_TEMP] = STATE_ERROR;
         }
         else
         {
-            rpm_set[RPM_1] = 0;
-            rpm_set[RPM_2] = 0;
+            rpm_set[FAN_1] = 0;
+            rpm_set[FAN_2] = 0;
 
             state[DHT_TEMP] = STATE_OK;
         }
 
-        analogWrite(PIN_PWM_1, rpm_set[RPM_1]);
-        analogWrite(PIN_PWM_2, rpm_set[RPM_2]);
+        analogWrite(PIN_PWM_1, rpm_set[FAN_1]);
+        analogWrite(PIN_PWM_2, rpm_set[FAN_2]);
 
-        log_println("\n#SET-RPM_FAN_1: " + String(rpm_set[RPM_1] / 2.55) + "%" + "\n#SET-RPM_FAN_2: " + String(rpm_set[RPM_2] / 2.55) + "%");
+        log_println("\n#SET-RPM_FAN_1: " + String(rpm_set[FAN_1] / 2.55) + "%" + "\n#SET-RPM_FAN_2: " + String(rpm_set[FAN_2] / 2.55) + "%");
 
         counter_seconds = 0;
     }
     else if (isnan(temp))
     {
-        rpm_set[RPM_1] = 255;
-        rpm_set[RPM_2] = 255;
+        rpm_set[FAN_1] = 255;
+        rpm_set[FAN_2] = 255;
 
-        analogWrite(PIN_PWM_1, rpm_set[RPM_1]);
-        analogWrite(PIN_PWM_2, rpm_set[RPM_2]);
+        analogWrite(PIN_PWM_1, rpm_set[FAN_1]);
+        analogWrite(PIN_PWM_2, rpm_set[FAN_2]);
         state[DHT_TEMP] = STATE_ERROR;
 
-        log_println("\n#SET-RPM_FAN_1: " + String(rpm_set[RPM_1] / 2.55) + "%" + "\n#SET-RPM_FAN_2: " + String(rpm_set[RPM_2] / 2.55) + "%");
+        log_println("\n#SET-RPM_FAN_1: " + String(rpm_set[FAN_1] / 2.55) + "%" + "\n#SET-RPM_FAN_2: " + String(rpm_set[FAN_2] / 2.55) + "%");
     }
 
     if (isnan(hum))
@@ -230,17 +230,17 @@ void calc_rpm(uint8_t num)
 
     rpm[num] = (counter_rpm[num] / ((millis() - prevMillisRPM[num]) / 1000.0)) * 60;
     log_print("\n## rpm: " + String(rpm[num]) + "\n");
-    float rpm_percent = RPMToPercent(rpm[num], num == RPM_1 ? RPM_1 : (num == RPM_2 ? RPM_2 : UNDEFINED));
+    float rpm_percent = RPMToPercent(rpm[num], num == FAN_1 ? FAN_1 : (num == FAN_2 ? FAN_2 : UNDEFINED));
 
     log_print(" RPM_FAN_" + String(num) + ": " + String(rpm_percent) + "% ");
 
     if (abs((rpm_set[num] / 2.55) - rpm_percent) > 20 || (rpm_percent <= 2 && (rpm_set[num] / 2.55) > 2))
     {
-        state[num == RPM_1 ? FAN_1 : (num == RPM_2 ? FAN_2 : UNDEFINED)] = STATE_ERROR;
+        state[num == FAN_1 ? FAN_1 : (num == FAN_2 ? FAN_2 : UNDEFINED)] = STATE_ERROR;
     }
     else
     {
-        state[num == RPM_1 ? FAN_1 : (num == RPM_2 ? FAN_2 : UNDEFINED)] = STATE_OK;
+        state[num == FAN_1 ? FAN_1 : (num == FAN_2 ? FAN_2 : UNDEFINED)] = STATE_OK;
     }
 
     counter_rpm[num] = 0;
@@ -321,10 +321,10 @@ void initWebApi()
 
 void isr_rpm_1()
 {
-    counter_rpm[RPM_1]++;
+    counter_rpm[FAN_1]++;
 }
 
 void isr_rpm_2()
 {
-    counter_rpm[RPM_2]++;
+    counter_rpm[FAN_2]++;
 }
